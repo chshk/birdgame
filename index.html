@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>title</title>
+    <style>
+        canvas {
+            border: 1px solid #999;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="800" height="600"></canvas>
+    <script src="./js/my-sky.js"></script>
+    <script src="./js/my-bird.js"></script>
+    <script src="./js/my-pipe.js"></script>
+    <script src="./js/my-land.js"></script>
+    <script>
+        // 多张照片加载：
+        function loadImg(arr, callback) {
+            var imgs = [];
+            var count = 0;
+            for (var i = 0; i < arr.length; i++) {
+                var img = new Image();
+                img.src = "./images/" + arr[i] + ".png";
+                imgs[arr[i]] = img;
+                img.onload = function() {
+                    count++;
+                    if (count == arr.length - 1) {
+                        callback(imgs);
+                    }
+                }
+            }
+        }
+        var c = document.querySelector("canvas");
+        var ctx = c.getContext("2d");
+        // 图片加载:
+        loadImg(["sky", "birds", "pipe1", "pipe2", "land"], function(imgList) {
+            var imgSky = imgList['sky'];
+            var imgBird = imgList['birds'];
+            var imgPipeT = imgList['pipe2'];
+            var imgPipeB = imgList['pipe1'];
+            var imgLand = imgList["land"];
+            var pipeArr = [];
+            for (var i = 0; i < 6; i++) {
+                var imgPipe = new Pipe({
+                    ctx: ctx,
+                    imgT: imgPipeT,
+                    imgB: imgPipeB,
+                    canvasX: imgPipeT.width * 3 * i + 300
+                })
+                pipeArr.push(imgPipe);
+            }
+            var sky1 = new Sky({
+                ctx: ctx,
+                img: imgSky,
+            })
+            var sky2 = new Sky({
+                ctx: ctx,
+                img: imgSky,
+                x: imgSky.width
+            })
+            var bird = new Bird({
+                ctx: ctx,
+                img: imgBird,
+                canvasX: 100,
+                canvasY: 100
+            })
+            var landArr = [];
+            for (var i = 0; i < 4; i++) {
+                var land = new Land({
+                    ctx: ctx,
+                    img: imgLand,
+                    canvasX: imgLand.width * i,
+                    canvasY: c.height - imgLand.height
+                })
+                landArr.push(land);
+            }
+            var startTime = new Date(),
+                endTime = 0;
+            // 图画：
+            function drawImg() {
+                endTime = new Date();
+                var offsetTime = endTime - startTime;
+                startTime = endTime;
+                ctx.clearRect(0, 0, c.width, c.height);
+                ctx.beginPath();
+                // 画天空：
+                sky1.drawSky();
+                sky2.drawSky();
+                // 画小鸟：
+                bird.drawBird(offsetTime);
+
+                // 画管道：
+                for (var i = 0; i < pipeArr.length; i++) {
+                    pipeArr[i].drawPipe();
+                }
+                // 画陆地：
+                for (var i = 0; i < landArr.length; i++) {
+                    landArr[i].drawLand();
+                }
+                if (bird.canvasY + imgBird.height / 2 + 112 > c.height || bird.canvasY + imgBird.height / 2 <= 0) {
+                    return;
+                }
+                if (ctx.isPointInPath(bird.canvasX + bird.imgW / 2, bird.canvasY + bird.imgH / 2)) {
+                    return;
+                }
+                // 
+                window.requestAnimationFrame(drawImg);
+
+            }
+            drawImg();
+
+
+            c.onclick = function() {
+                bird.speed = -0.2;
+            }
+        })
+    </script>
+</body>
+
+</html>
