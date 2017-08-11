@@ -43,7 +43,11 @@
             var imgPipeT = imgList['pipe2'];
             var imgPipeB = imgList['pipe1'];
             var imgLand = imgList["land"];
+            var isRuning = false;
             var pipeArr = [];
+            var startTime = new Date();
+            var endTime = new Date(),
+                gameStarTime = new Date();
             for (var i = 0; i < 6; i++) {
                 var imgPipe = new Pipe({
                     ctx: ctx,
@@ -78,15 +82,17 @@
                 })
                 landArr.push(land);
             }
-            var startTime = new Date(),
-                endTime = 0;
             // 图画：
             function drawImg() {
                 endTime = new Date();
                 var offsetTime = endTime - startTime;
                 startTime = endTime;
+                var duration = endTime - gameStarTime;
+
                 ctx.clearRect(0, 0, c.width, c.height);
                 ctx.beginPath();
+
+
                 // 画天空：
                 sky1.drawSky();
                 sky2.drawSky();
@@ -101,21 +107,48 @@
                 for (var i = 0; i < landArr.length; i++) {
                     landArr[i].drawLand();
                 }
-                if (bird.canvasY + imgBird.height / 2 + 112 > c.height || bird.canvasY + imgBird.height / 2 <= 0) {
+                // 文本：
+                var hour = Math.floor(duration / 1000 / 3600);
+                var minute = Math.floor(duration / 1000 % 3600 / 60);
+                var second = Math.floor(duration / 1000 % 60);
+                var ms = Math.floor(duration % 1000);
+                var str = "你坚持了：" + hour + "时 " + minute + "分 " + second + "秒"; // + ms + "毫秒";
+                var textWidth = ctx.measureText(str).width;
+                ctx.textBaseline = "top";
+                ctx.textAlign = "center";
+                ctx.font = "20px 微软雅黑";
+                ctx.fillStyle = "hsla(30,100%,50%,1)";
+                ctx.fillText(str, c.width - textWidth, 10);
+                if (bird.canvasY + imgBird.height / 2 + 112 > c.height || bird.canvasY + imgBird.height / 2 <=
+                    0) {
                     return;
                 }
                 if (ctx.isPointInPath(bird.canvasX + bird.imgW / 2, bird.canvasY + bird.imgH / 2)) {
                     return;
                 }
                 // 
-                window.requestAnimationFrame(drawImg);
+
+                if (isRuning) {
+                    window.requestAnimationFrame(drawImg);
+                }
 
             }
             drawImg();
+            ctx.beginPath();
+            ctx.fillStyle = "red";
+            ctx.font = "18px 微软雅黑";
+            ctx.fillText("点击开始", 400, 300);
 
 
             c.onclick = function() {
-                bird.speed = -0.2;
+                if (!isRuning) {
+                    isRuning = true;
+                    startTime = new Date();
+                    gameStarTime = new Date();
+                    drawImg();
+                } else {
+                    bird.speed = -0.2;
+                }
             }
         })
     </script>
